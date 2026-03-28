@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 
-type Theme = "light" | "dark" | "system";
+import type { DesktopTheme } from "@t3tools/contracts";
+
+type Theme = DesktopTheme | "black";
 type ThemeSnapshot = {
   theme: Theme;
   systemDark: boolean;
@@ -22,7 +24,7 @@ function getSystemDark(): boolean {
 
 function getStored(): Theme {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw === "light" || raw === "dark" || raw === "system") return raw;
+  if (raw === "light" || raw === "dark" || raw === "system" || raw === "black") return raw;
   return "system";
 }
 
@@ -30,8 +32,9 @@ function applyTheme(theme: Theme, suppressTransitions = false) {
   if (suppressTransitions) {
     document.documentElement.classList.add("no-transitions");
   }
-  const isDark = theme === "dark" || (theme === "system" && getSystemDark());
+  const isDark = theme === "dark" || theme === "black" || (theme === "system" && getSystemDark());
   document.documentElement.classList.toggle("dark", isDark);
+  document.documentElement.classList.toggle("theme-black", theme === "black");
   syncDesktopTheme(theme);
   if (suppressTransitions) {
     // Force a reflow so the no-transitions class takes effect before removal
@@ -44,14 +47,15 @@ function applyTheme(theme: Theme, suppressTransitions = false) {
 }
 
 function syncDesktopTheme(theme: Theme) {
+  const desktopTheme: DesktopTheme = theme === "black" ? "dark" : theme;
   const bridge = window.desktopBridge;
-  if (!bridge || lastDesktopTheme === theme) {
+  if (!bridge || lastDesktopTheme === desktopTheme) {
     return;
   }
 
-  lastDesktopTheme = theme;
-  void bridge.setTheme(theme).catch(() => {
-    if (lastDesktopTheme === theme) {
+  lastDesktopTheme = desktopTheme;
+  void bridge.setTheme(desktopTheme).catch(() => {
+    if (lastDesktopTheme === desktopTheme) {
       lastDesktopTheme = null;
     }
   });
@@ -104,7 +108,13 @@ export function useTheme() {
   const theme = snapshot.theme;
 
   const resolvedTheme: "light" | "dark" =
-    theme === "system" ? (snapshot.systemDark ? "dark" : "light") : theme;
+    theme === "system"
+      ? snapshot.systemDark
+        ? "dark"
+        : "light"
+      : theme === "black"
+        ? "dark"
+        : theme;
 
   const setTheme = useCallback((next: Theme) => {
     localStorage.setItem(STORAGE_KEY, next);

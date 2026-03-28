@@ -67,6 +67,11 @@ const THEME_OPTIONS = [
     label: "Dark",
     description: "Always use the dark theme.",
   },
+  {
+    value: "black",
+    label: "Black",
+    description: "Use pure black surfaces for the app shell.",
+  },
 ] as const;
 
 const TIMESTAMP_FORMAT_LABELS = {
@@ -618,7 +623,13 @@ function SettingsRouteView() {
                   <Select
                     value={theme}
                     onValueChange={(value) => {
-                      if (value !== "system" && value !== "light" && value !== "dark") return;
+                      if (
+                        value !== "system" &&
+                        value !== "light" &&
+                        value !== "dark" &&
+                        value !== "black"
+                      )
+                        return;
                       setTheme(value);
                     }}
                   >
