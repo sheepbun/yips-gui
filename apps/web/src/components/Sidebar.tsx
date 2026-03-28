@@ -4,7 +4,6 @@ import {
   ChevronRightIcon,
   FolderIcon,
   GitPullRequestIcon,
-  PlusIcon,
   RocketIcon,
   SettingsIcon,
   SquarePenIcon,
@@ -1099,6 +1098,8 @@ export default function Sidebar() {
     [appSettings.sidebarProjectSortOrder, projects, threads],
   );
   const isManualProjectSorting = appSettings.sidebarProjectSortOrder === "manual";
+  const addProjectRowLabel = shouldShowProjectPathEntry ? "Cancel add project" : "+ Add project";
+  const addProjectRowAriaLabel = shouldShowProjectPathEntry ? "Cancel add project" : "Add project";
 
   function renderProjectItem(
     project: (typeof sortedProjects)[number],
@@ -1618,6 +1619,84 @@ export default function Sidebar() {
     </div>
   );
 
+  const addProjectRow = (
+    <SidebarMenuItem className="rounded-md">
+      <SidebarMenuButton
+        render={<button type="button" />}
+        aria-label={addProjectRowAriaLabel}
+        aria-pressed={shouldShowProjectPathEntry}
+        tooltip={addProjectRowAriaLabel}
+        className="w-full justify-center rounded-lg border border-dashed border-sidebar-border bg-transparent text-xs text-muted-foreground/70 hover:border-sidebar-accent hover:bg-accent hover:text-foreground"
+        onClick={handleStartAddProject}
+      >
+        <span>{addProjectRowLabel}</span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+
+  const addProjectForm = shouldShowProjectPathEntry ? (
+    <div className="px-1 pt-1 pb-2">
+      {isElectron && (
+        <button
+          type="button"
+          className="mb-1.5 flex w-full items-center justify-center gap-2 rounded-md border border-border bg-secondary py-1.5 text-xs text-foreground/80 transition-colors duration-150 hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={() => void handlePickFolder()}
+          disabled={isPickingFolder || isAddingProject}
+        >
+          <FolderIcon className="size-3.5" />
+          {isPickingFolder ? "Picking folder..." : "Browse for folder"}
+        </button>
+      )}
+      <div className="flex gap-1.5">
+        <input
+          ref={addProjectInputRef}
+          className={`min-w-0 flex-1 rounded-md border bg-secondary px-2 py-1 font-mono text-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-none ${
+            addProjectError
+              ? "border-red-500/70 focus:border-red-500"
+              : "border-border focus:border-ring"
+          }`}
+          placeholder="/path/to/project"
+          value={newCwd}
+          onChange={(event) => {
+            setNewCwd(event.target.value);
+            setAddProjectError(null);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") handleAddProject();
+            if (event.key === "Escape") {
+              setAddingProject(false);
+              setAddProjectError(null);
+            }
+          }}
+          autoFocus
+        />
+        <button
+          type="button"
+          className="shrink-0 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-colors duration-150 hover:bg-primary/90 disabled:opacity-60"
+          onClick={handleAddProject}
+          disabled={!canAddProject}
+        >
+          {isAddingProject ? "Adding..." : "Add"}
+        </button>
+      </div>
+      {addProjectError && (
+        <p className="mt-1 px-0.5 text-[11px] leading-tight text-red-400">{addProjectError}</p>
+      )}
+      <div className="mt-1.5 px-0.5">
+        <button
+          type="button"
+          className="text-[11px] text-muted-foreground/50 transition-colors hover:text-muted-foreground"
+          onClick={() => {
+            setAddingProject(false);
+            setAddProjectError(null);
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <>
       {isElectron ? (
@@ -1676,110 +1755,21 @@ export default function Sidebar() {
           </SidebarGroup>
         ) : null}
         <SidebarGroup className="px-2 py-2">
-          <div className="mb-1 flex items-center justify-between px-2">
+          <div className="mb-1 flex items-center justify-between pl-2 pr-1">
             <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
               Projects
             </span>
-            <div className="flex items-center gap-1">
-              <ProjectSortMenu
-                projectSortOrder={appSettings.sidebarProjectSortOrder}
-                threadSortOrder={appSettings.sidebarThreadSortOrder}
-                onProjectSortOrderChange={(sortOrder) => {
-                  updateSettings({ sidebarProjectSortOrder: sortOrder });
-                }}
-                onThreadSortOrderChange={(sortOrder) => {
-                  updateSettings({ sidebarThreadSortOrder: sortOrder });
-                }}
-              />
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <button
-                      type="button"
-                      aria-label={shouldShowProjectPathEntry ? "Cancel add project" : "Add project"}
-                      aria-pressed={shouldShowProjectPathEntry}
-                      className="inline-flex size-5 cursor-pointer items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-accent hover:text-foreground"
-                      onClick={handleStartAddProject}
-                    />
-                  }
-                >
-                  <PlusIcon
-                    className={`size-3.5 transition-transform duration-150 ${
-                      shouldShowProjectPathEntry ? "rotate-45" : "rotate-0"
-                    }`}
-                  />
-                </TooltipTrigger>
-                <TooltipPopup side="right">
-                  {shouldShowProjectPathEntry ? "Cancel add project" : "Add project"}
-                </TooltipPopup>
-              </Tooltip>
-            </div>
+            <ProjectSortMenu
+              projectSortOrder={appSettings.sidebarProjectSortOrder}
+              threadSortOrder={appSettings.sidebarThreadSortOrder}
+              onProjectSortOrderChange={(sortOrder) => {
+                updateSettings({ sidebarProjectSortOrder: sortOrder });
+              }}
+              onThreadSortOrderChange={(sortOrder) => {
+                updateSettings({ sidebarThreadSortOrder: sortOrder });
+              }}
+            />
           </div>
-
-          {shouldShowProjectPathEntry && (
-            <div className="mb-2 px-1">
-              {isElectron && (
-                <button
-                  type="button"
-                  className="mb-1.5 flex w-full items-center justify-center gap-2 rounded-md border border-border bg-secondary py-1.5 text-xs text-foreground/80 transition-colors duration-150 hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                  onClick={() => void handlePickFolder()}
-                  disabled={isPickingFolder || isAddingProject}
-                >
-                  <FolderIcon className="size-3.5" />
-                  {isPickingFolder ? "Picking folder..." : "Browse for folder"}
-                </button>
-              )}
-              <div className="flex gap-1.5">
-                <input
-                  ref={addProjectInputRef}
-                  className={`min-w-0 flex-1 rounded-md border bg-secondary px-2 py-1 font-mono text-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-none ${
-                    addProjectError
-                      ? "border-red-500/70 focus:border-red-500"
-                      : "border-border focus:border-ring"
-                  }`}
-                  placeholder="/path/to/project"
-                  value={newCwd}
-                  onChange={(event) => {
-                    setNewCwd(event.target.value);
-                    setAddProjectError(null);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") handleAddProject();
-                    if (event.key === "Escape") {
-                      setAddingProject(false);
-                      setAddProjectError(null);
-                    }
-                  }}
-                  autoFocus
-                />
-                <button
-                  type="button"
-                  className="shrink-0 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-colors duration-150 hover:bg-primary/90 disabled:opacity-60"
-                  onClick={handleAddProject}
-                  disabled={!canAddProject}
-                >
-                  {isAddingProject ? "Adding..." : "Add"}
-                </button>
-              </div>
-              {addProjectError && (
-                <p className="mt-1 px-0.5 text-[11px] leading-tight text-red-400">
-                  {addProjectError}
-                </p>
-              )}
-              <div className="mt-1.5 px-0.5">
-                <button
-                  type="button"
-                  className="text-[11px] text-muted-foreground/50 transition-colors hover:text-muted-foreground"
-                  onClick={() => {
-                    setAddingProject(false);
-                    setAddProjectError(null);
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
 
           {isManualProjectSorting ? (
             <DndContext
@@ -1801,6 +1791,8 @@ export default function Sidebar() {
                     </SortableProjectItem>
                   ))}
                 </SortableContext>
+                {addProjectRow}
+                {addProjectForm}
               </SidebarMenu>
             </DndContext>
           ) : (
@@ -1810,10 +1802,12 @@ export default function Sidebar() {
                   {renderProjectItem(project, null)}
                 </SidebarMenuItem>
               ))}
+              {addProjectRow}
+              {addProjectForm}
             </SidebarMenu>
           )}
 
-          {projects.length === 0 && !shouldShowProjectPathEntry && (
+          {projects.length === 0 && (
             <div className="px-2 pt-4 text-center text-xs text-muted-foreground/60">
               No projects yet
             </div>
