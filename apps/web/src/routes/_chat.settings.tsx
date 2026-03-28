@@ -34,7 +34,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import { SidebarTrigger } from "../components/ui/sidebar";
 import { Switch } from "../components/ui/switch";
 import { ProviderModelPicker } from "../components/chat/ProviderModelPicker";
 import { TraitsPicker } from "../components/chat/TraitsPicker";
@@ -46,6 +45,7 @@ import { useAppVersion } from "../hooks/useAppVersion";
 import { useTheme } from "../hooks/useTheme";
 import { serverConfigQueryOptions, serverQueryKeys } from "../lib/serverReactQuery";
 import { cn } from "../lib/utils";
+import { isMacPlatform } from "../lib/utils";
 import { formatRelativeTime } from "../timestampFormat";
 import { ensureNativeApi, readNativeApi } from "../nativeApi";
 import { DEFAULT_UNIFIED_SETTINGS } from "@t3tools/contracts/settings";
@@ -321,6 +321,7 @@ function SettingsRouteView() {
   const refreshingRef = useRef(false);
   const queryClient = useQueryClient();
   useRelativeTimeTick();
+  const shouldShowMacTitlebarInset = isElectron && isMacPlatform(navigator.platform);
 
   const refreshProviders = useCallback(() => {
     if (refreshingRef.current) return;
@@ -570,32 +571,15 @@ function SettingsRouteView() {
   return (
     <SidebarInset className="h-dvh min-h-0 overflow-hidden overscroll-y-none bg-background text-foreground isolate">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background text-foreground">
-        {!isElectron && (
-          <header className="border-b border-border px-3 py-2 sm:px-5">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger className="size-7 shrink-0 md:hidden" />
-              <span className="text-sm font-medium text-foreground">Settings</span>
-              <div className="ms-auto flex items-center gap-2">
-                <Button
-                  size="xs"
-                  variant="outline"
-                  disabled={changedSettingLabels.length === 0}
-                  onClick={() => void restoreDefaults()}
-                >
-                  <RotateCcwIcon className="size-3.5" />
-                  Restore defaults
-                </Button>
-              </div>
-            </div>
-          </header>
-        )}
-
-        {isElectron && (
-          <div className="drag-region flex h-[52px] shrink-0 items-center border-b border-border px-5">
-            <span className="text-xs font-medium tracking-wide text-muted-foreground/70">
-              Settings
-            </span>
-            <div className="ms-auto flex items-center gap-2">
+        <div
+          className={cn(
+            "flex-1 overflow-y-auto p-6",
+            shouldShowMacTitlebarInset && "pt-[calc(var(--spacing(6))+52px)]",
+          )}
+        >
+          <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+            <div className="flex items-center justify-between gap-4">
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">Settings</h1>
               <Button
                 size="xs"
                 variant="outline"
@@ -606,11 +590,7 @@ function SettingsRouteView() {
                 Restore defaults
               </Button>
             </div>
-          </div>
-        )}
 
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
             <SettingsSection title="General">
               <SettingsRow
                 title="Theme"

@@ -69,6 +69,7 @@ type SidebarResolvedResizableOptions = {
 };
 
 type SidebarInstanceContextProps = {
+  animated: boolean;
   resizable: SidebarResolvedResizableOptions | null;
   side: "left" | "right";
 };
@@ -175,6 +176,7 @@ function Sidebar({
   variant = "sidebar",
   collapsible = "offcanvas",
   resizable = false,
+  animated = true,
   className,
   children,
   ...props
@@ -183,6 +185,7 @@ function Sidebar({
   variant?: "sidebar" | "floating" | "inset";
   collapsible?: "offcanvas" | "icon" | "none";
   resizable?: boolean | SidebarResizableOptions;
+  animated?: boolean;
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
   const resolvedResizable = React.useMemo<SidebarResolvedResizableOptions | null>(() => {
@@ -200,8 +203,8 @@ function Sidebar({
     };
   }, [collapsible, isMobile, resizable]);
   const instanceContextValue = React.useMemo<SidebarInstanceContextProps>(
-    () => ({ side, resizable: resolvedResizable }),
-    [resolvedResizable, side],
+    () => ({ animated, side, resizable: resolvedResizable }),
+    [animated, resolvedResizable, side],
   );
 
   if (collapsible === "none") {
@@ -228,6 +231,8 @@ function Sidebar({
           <SheetPopup
             className={cn(
               "w-(--sidebar-width) max-w-none bg-sidebar p-0 text-sidebar-foreground",
+              !animated &&
+                "transition-none data-ending-style:opacity-100 data-ending-style:translate-x-0 data-starting-style:opacity-100 data-starting-style:translate-x-0",
               className,
             )}
             data-mobile="true"
@@ -265,7 +270,8 @@ function Sidebar({
         {/* This is what handles the sidebar gap on desktop */}
         <div
           className={cn(
-            "relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear",
+            "relative w-(--sidebar-width) bg-transparent",
+            animated ? "transition-[width] duration-200 ease-linear" : "transition-none",
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
@@ -276,7 +282,8 @@ function Sidebar({
         />
         <div
           className={cn(
-            "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex",
+            "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) md:flex",
+            animated ? "transition-[left,right,width] duration-200 ease-linear" : "transition-none",
             side === "left"
               ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
               : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
@@ -356,6 +363,7 @@ function SidebarRail({
     wrapper: HTMLElement;
   } | null>(null);
   const resolvedResizable = sidebarInstance?.resizable ?? null;
+  const animated = sidebarInstance?.animated ?? true;
   const canResize = resolvedResizable !== null && open;
   const railLabel = canResize ? "Resize Sidebar" : "Toggle Sidebar";
   const railTitle = canResize ? "Drag to resize sidebar" : "Toggle Sidebar";
@@ -569,7 +577,8 @@ function SidebarRail({
       aria-label={railLabel}
       className={cn(
         /* disable pointer events only when offcanvas sidebar is collapsed, that's when the rail sits over the native scrollbar on windows and linux. icon mode stays fully clickable. */
-        "-translate-x-1/2 group-data-[side=left]:-right-4 absolute inset-y-0 z-20 hidden w-4 transition-all ease-linear after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] hover:after:bg-sidebar-border group-data-[side=right]:left-0 sm:flex [[data-collapsible=offcanvas][data-state=collapsed]_&]:pointer-events-none",
+        "-translate-x-1/2 group-data-[side=left]:-right-4 absolute inset-y-0 z-20 hidden w-4 after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] hover:after:bg-sidebar-border group-data-[side=right]:left-0 sm:flex [[data-collapsible=offcanvas][data-state=collapsed]_&]:pointer-events-none",
+        animated ? "transition-all ease-linear" : "transition-none",
         "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",
         "[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize",
         "group-data-[collapsible=offcanvas]:translate-x-0 hover:group-data-[collapsible=offcanvas]:bg-sidebar group-data-[collapsible=offcanvas]:after:left-full",

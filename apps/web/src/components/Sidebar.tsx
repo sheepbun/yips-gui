@@ -1,11 +1,9 @@
 import {
-  ArrowLeftIcon,
   ArrowUpDownIcon,
   ChevronRightIcon,
   FolderIcon,
   GitPullRequestIcon,
   RocketIcon,
-  SettingsIcon,
   SquarePenIcon,
   TerminalIcon,
   TriangleAlertIcon,
@@ -36,7 +34,7 @@ import {
   type ResolvedKeybindingsConfig,
 } from "@t3tools/contracts";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocation, useNavigate, useParams } from "@tanstack/react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   type SidebarProjectSortOrder,
   type SidebarThreadSortOrder,
@@ -71,7 +69,6 @@ import { Menu, MenuGroup, MenuPopup, MenuRadioGroup, MenuRadioItem, MenuTrigger 
 import { Tooltip, TooltipPopup, TooltipTrigger } from "./ui/tooltip";
 import {
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarHeader,
   SidebarMenuAction,
@@ -81,8 +78,6 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarSeparator,
-  SidebarTrigger,
 } from "./ui/sidebar";
 import { useThreadSelectionStore } from "../threadSelectionStore";
 import { formatWorktreePathForDisplay, getOrphanedWorktreePathForThread } from "../worktreeCleanup";
@@ -374,7 +369,6 @@ export default function Sidebar() {
     (store) => store.clearProjectDraftThreadById,
   );
   const navigate = useNavigate();
-  const isOnSettings = useLocation({ select: (loc) => loc.pathname === "/settings" });
   const appSettings = useSettings();
   const { appVersion, appVersionLabel } = useAppVersion();
   const { updateSettings } = useUpdateSettings();
@@ -1599,14 +1593,13 @@ export default function Sidebar() {
   }, []);
 
   const wordmark = (
-    <div className="flex items-center gap-2">
-      <SidebarTrigger className="shrink-0 md:hidden" />
+    <div className="flex min-w-0 items-center justify-center gap-1">
       <Tooltip>
         <TooltipTrigger
           render={
-            <div className="flex min-w-0 flex-1 items-center gap-1 ml-1 cursor-pointer">
+            <div className="relative inline-flex min-w-0 items-center justify-center cursor-pointer">
               <YipsWordmark />
-              <span className="rounded-full bg-muted/50 px-1.5 py-0.5 text-[8px] font-medium tracking-[0.18em] text-muted-foreground/60">
+              <span className="absolute left-full ml-1.5 rounded-full bg-muted/50 px-1.5 py-0.5 text-[8px] font-medium tracking-[0.18em] text-muted-foreground/60">
                 {appVersionLabel}
               </span>
             </div>
@@ -1701,7 +1694,7 @@ export default function Sidebar() {
     <>
       {isElectron ? (
         <>
-          <SidebarHeader className="drag-region h-[52px] flex-row items-center gap-2 px-4 py-0 pl-[90px]">
+          <SidebarHeader className="drag-region relative h-[52px] flex-row items-center justify-center px-4 py-0">
             {wordmark}
             {showDesktopUpdateButton && (
               <Tooltip>
@@ -1712,7 +1705,7 @@ export default function Sidebar() {
                       aria-label={desktopUpdateTooltip}
                       aria-disabled={desktopUpdateButtonDisabled || undefined}
                       disabled={desktopUpdateButtonDisabled}
-                      className={`inline-flex size-7 ml-auto mt-1.5 items-center justify-center rounded-md text-muted-foreground transition-colors ${desktopUpdateButtonInteractivityClasses} ${desktopUpdateButtonClasses}`}
+                      className={`absolute right-4 top-1/2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors ${desktopUpdateButtonInteractivityClasses} ${desktopUpdateButtonClasses}`}
                       onClick={handleDesktopUpdateButtonClick}
                     >
                       <RocketIcon className="size-3.5" />
@@ -1725,7 +1718,7 @@ export default function Sidebar() {
           </SidebarHeader>
         </>
       ) : (
-        <SidebarHeader className="gap-3 px-3 py-2 sm:gap-2.5 sm:px-4 sm:py-3">
+        <SidebarHeader className="items-center gap-3 px-3 py-2 sm:gap-2.5 sm:px-4 sm:py-3">
           {wordmark}
         </SidebarHeader>
       )}
@@ -1814,33 +1807,6 @@ export default function Sidebar() {
           )}
         </SidebarGroup>
       </SidebarContent>
-
-      <SidebarSeparator />
-      <SidebarFooter className="p-2">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            {isOnSettings ? (
-              <SidebarMenuButton
-                size="sm"
-                className="gap-2 px-2 py-1.5 text-muted-foreground/70 hover:bg-accent hover:text-foreground"
-                onClick={() => window.history.back()}
-              >
-                <ArrowLeftIcon className="size-3.5" />
-                <span className="text-xs">Back</span>
-              </SidebarMenuButton>
-            ) : (
-              <SidebarMenuButton
-                size="sm"
-                className="gap-2 px-2 py-1.5 text-muted-foreground/70 hover:bg-accent hover:text-foreground"
-                onClick={() => void navigate({ to: "/settings" })}
-              >
-                <SettingsIcon className="size-3.5" />
-                <span className="text-xs">Settings</span>
-              </SidebarMenuButton>
-            )}
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </>
   );
 }
