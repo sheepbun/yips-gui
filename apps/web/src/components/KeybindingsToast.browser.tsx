@@ -40,6 +40,8 @@ const wsLink = ws.link(/ws(s)?:\/\/.*/);
 
 function createBaseServerConfig(): ServerConfig {
   return {
+    appVersion: "0.0.0",
+    appVersionLabel: "v0.0.0",
     cwd: "/repo/project",
     keybindingsConfigPath: "/repo/project/.t3code-keybindings.json",
     keybindings: [],

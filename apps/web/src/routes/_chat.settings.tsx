@@ -24,7 +24,6 @@ import {
   MAX_CUSTOM_MODEL_LENGTH,
   resolveAppModelSelectionState,
 } from "../modelSelection";
-import { APP_VERSION_LABEL } from "../branding";
 import { Button } from "../components/ui/button";
 import { Collapsible, CollapsibleContent } from "../components/ui/collapsible";
 import { Input } from "../components/ui/input";
@@ -43,6 +42,7 @@ import { SidebarInset } from "../components/ui/sidebar";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../components/ui/tooltip";
 import { resolveAndPersistPreferredEditor } from "../editorPreferences";
 import { isElectron } from "../env";
+import { useAppVersion } from "../hooks/useAppVersion";
 import { useTheme } from "../hooks/useTheme";
 import { serverConfigQueryOptions, serverQueryKeys } from "../lib/serverReactQuery";
 import { cn } from "../lib/utils";
@@ -290,6 +290,7 @@ function SettingResetButton({ label, onClick }: { label: string; onClick: () => 
 
 function SettingsRouteView() {
   const { theme, setTheme } = useTheme();
+  const { appVersionLabel } = useAppVersion();
   const settings = useSettings();
   const { updateSettings, resetSettings } = useUpdateSettings();
   const serverConfigQuery = useQuery(serverConfigQueryOptions());
@@ -1309,7 +1310,7 @@ function SettingsRouteView() {
                 description="Current application version."
                 control={
                   <code className="text-xs font-medium text-muted-foreground">
-                    {APP_VERSION_LABEL}
+                    {appVersionLabel}
                   </code>
                 }
               />

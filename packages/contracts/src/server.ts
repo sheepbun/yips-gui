@@ -59,6 +59,8 @@ export type ServerProvider = typeof ServerProvider.Type;
 const ServerProviders = Schema.Array(ServerProvider);
 
 export const ServerConfig = Schema.Struct({
+  appVersion: TrimmedNonEmptyString,
+  appVersionLabel: TrimmedNonEmptyString,
   cwd: TrimmedNonEmptyString,
   keybindingsConfigPath: TrimmedNonEmptyString,
   keybindings: ResolvedKeybindingsConfig,

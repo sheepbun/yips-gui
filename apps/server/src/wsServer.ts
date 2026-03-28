@@ -8,6 +8,7 @@
  */
 import http from "node:http";
 import type { Duplex } from "node:stream";
+import { fileURLToPath } from "node:url";
 
 import Mime from "@effect/platform-node/Mime";
 import {
@@ -79,6 +80,8 @@ import { expandHomePath } from "./os-jank.ts";
 import { makeServerPushBus } from "./wsServer/pushBus.ts";
 import { makeServerReadiness } from "./wsServer/readiness.ts";
 import { decodeJsonResult, formatSchemaError } from "@t3tools/shared/schemaJson";
+import { resolveYipsVersionMetadata } from "@t3tools/shared/yipsVersion";
+import { version as serverPackageVersion } from "../package.json" with { type: "json" };
 
 /**
  * ServerShape - Service API for server lifecycle control.
@@ -103,6 +106,8 @@ export interface ServerShape {
  * Server - Service tag for HTTP/WebSocket lifecycle management.
  */
 export class Server extends ServiceMap.Service<Server, ServerShape>()("t3/wsServer/Server") {}
+
+const repoRoot = fileURLToPath(new URL("../../..", import.meta.url));
 
 const isServerNotRunningError = (error: Error): boolean => {
   const maybeCode = (error as NodeJS.ErrnoException).code;
@@ -905,7 +910,10 @@ export const createServer = Effect.fn(function* (): Effect.fn.Return<
         const keybindingsConfig = yield* keybindingsManager.loadConfigState;
         const settings = yield* serverSettingsManager.getSettings;
         const providers = yield* Ref.get(providersRef);
+        const versionMetadata = resolveYipsVersionMetadata(repoRoot, serverPackageVersion);
         return {
+          appVersion: versionMetadata.appVersion,
+          appVersionLabel: versionMetadata.appVersionLabel,
           cwd,
           keybindingsConfigPath,
           keybindings: keybindingsConfig.keybindings,

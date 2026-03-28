@@ -43,7 +43,6 @@ import {
   type SidebarThreadSortOrder,
 } from "@t3tools/contracts/settings";
 import { isElectron } from "../env";
-import { APP_VERSION, APP_VERSION_LABEL } from "../branding";
 import { isLinuxPlatform, isMacPlatform, newCommandId, newProjectId } from "../lib/utils";
 import { useStore } from "../store";
 import { shortcutLabelForCommand } from "../keybindings";
@@ -101,6 +100,7 @@ import {
   sortThreadsForSidebar,
 } from "./Sidebar.logic";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
+import { useAppVersion } from "~/hooks/useAppVersion";
 import { useSettings, useUpdateSettings } from "~/hooks/useSettings";
 
 const EMPTY_KEYBINDINGS: ResolvedKeybindingsConfig = [];
@@ -377,6 +377,7 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const isOnSettings = useLocation({ select: (loc) => loc.pathname === "/settings" });
   const appSettings = useSettings();
+  const { appVersion, appVersionLabel } = useAppVersion();
   const { updateSettings } = useUpdateSettings();
   const { handleNewThread } = useHandleNewThread();
   const routeThreadId = useParams({
@@ -1605,13 +1606,13 @@ export default function Sidebar() {
             <div className="flex min-w-0 flex-1 items-center gap-1 ml-1 cursor-pointer">
               <YipsWordmark />
               <span className="rounded-full bg-muted/50 px-1.5 py-0.5 text-[8px] font-medium tracking-[0.18em] text-muted-foreground/60">
-                {APP_VERSION_LABEL}
+                {appVersionLabel}
               </span>
             </div>
           }
         />
         <TooltipPopup side="bottom" sideOffset={2}>
-          Version {APP_VERSION}
+          Version {appVersion}
         </TooltipPopup>
       </Tooltip>
     </div>

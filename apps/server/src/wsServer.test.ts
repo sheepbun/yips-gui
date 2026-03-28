@@ -2,6 +2,7 @@ import * as Http from "node:http";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { Effect, Exit, Layer, PlatformError, PubSub, Scope, Stream } from "effect";
@@ -54,8 +55,10 @@ import type { GitCoreShape } from "./git/Services/GitCore.ts";
 import { GitCore } from "./git/Services/GitCore.ts";
 import { GitCommandError, GitManagerError } from "./git/Errors.ts";
 import { MigrationError } from "@effect/sql-sqlite-bun/SqliteMigrator";
+import { resolveYipsVersionMetadata } from "@t3tools/shared/yipsVersion";
 import { AnalyticsService } from "./telemetry/Services/AnalyticsService.ts";
 import { ServerSettingsService } from "./serverSettings.ts";
+import { version as serverPackageVersion } from "../package.json" with { type: "json" };
 
 const asEventId = (value: string): EventId => EventId.makeUnsafe(value);
 const asProviderItemId = (value: string): ProviderItemId => ProviderItemId.makeUnsafe(value);
@@ -452,6 +455,8 @@ function compileKeybindings(bindings: KeybindingsConfig): ResolvedKeybindingsCon
 
 const DEFAULT_RESOLVED_KEYBINDINGS = compileKeybindings([...DEFAULT_KEYBINDINGS]);
 const VALID_EDITOR_IDS = new Set(EDITORS.map((editor) => editor.id));
+const repoRoot = fileURLToPath(new URL("../../..", import.meta.url));
+const expectedVersionMetadata = resolveYipsVersionMetadata(repoRoot, serverPackageVersion);
 
 function expectAvailableEditors(value: unknown): void {
   expect(Array.isArray(value)).toBe(true);
@@ -864,6 +869,8 @@ describe("WebSocket Server", () => {
     const response = await sendRequest(ws, WS_METHODS.serverGetConfig);
     expect(response.error).toBeUndefined();
     expect(response.result).toEqual({
+      appVersion: expectedVersionMetadata.appVersion,
+      appVersionLabel: expectedVersionMetadata.appVersionLabel,
       cwd: "/my/workspace",
       keybindingsConfigPath: keybindingsPath,
       keybindings: DEFAULT_RESOLVED_KEYBINDINGS,
@@ -890,6 +897,8 @@ describe("WebSocket Server", () => {
     const response = await sendRequest(ws, WS_METHODS.serverGetConfig);
     expect(response.error).toBeUndefined();
     expect(response.result).toEqual({
+      appVersion: expectedVersionMetadata.appVersion,
+      appVersionLabel: expectedVersionMetadata.appVersionLabel,
       cwd: "/my/workspace",
       keybindingsConfigPath: keybindingsPath,
       keybindings: DEFAULT_RESOLVED_KEYBINDINGS,
@@ -922,6 +931,8 @@ describe("WebSocket Server", () => {
     const response = await sendRequest(ws, WS_METHODS.serverGetConfig);
     expect(response.error).toBeUndefined();
     expect(response.result).toEqual({
+      appVersion: expectedVersionMetadata.appVersion,
+      appVersionLabel: expectedVersionMetadata.appVersionLabel,
       cwd: "/my/workspace",
       keybindingsConfigPath: keybindingsPath,
       keybindings: DEFAULT_RESOLVED_KEYBINDINGS,
@@ -1077,6 +1088,8 @@ describe("WebSocket Server", () => {
       fs.readFileSync(keybindingsPath, "utf8"),
     ) as KeybindingsConfig;
     expect(response.result).toEqual({
+      appVersion: expectedVersionMetadata.appVersion,
+      appVersionLabel: expectedVersionMetadata.appVersionLabel,
       cwd: "/my/workspace",
       keybindingsConfigPath: keybindingsPath,
       keybindings: compileKeybindings(persistedConfig),
@@ -1126,6 +1139,8 @@ describe("WebSocket Server", () => {
     const configResponse = await sendRequest(ws, WS_METHODS.serverGetConfig);
     expect(configResponse.error).toBeUndefined();
     expect(configResponse.result).toEqual({
+      appVersion: expectedVersionMetadata.appVersion,
+      appVersionLabel: expectedVersionMetadata.appVersionLabel,
       cwd: "/my/workspace",
       keybindingsConfigPath: keybindingsPath,
       keybindings: compileKeybindings(persistedConfig),
