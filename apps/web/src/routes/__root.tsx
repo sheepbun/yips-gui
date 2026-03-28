@@ -25,6 +25,7 @@ import { migrateLocalSettingsToServer } from "../hooks/useSettings";
 import { providerQueryKeys } from "../lib/providerReactQuery";
 import { projectQueryKeys } from "../lib/projectReactQuery";
 import { collectActiveTerminalThreadIds } from "../lib/terminalStateCleanup";
+import { useTheme } from "../hooks/useTheme";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -52,12 +53,18 @@ function RootRouteView() {
   return (
     <ToastProvider>
       <AnchoredToastProvider>
+        <ThemeBootstrap />
         <EventRouter />
         <DesktopProjectBootstrap />
         <Outlet />
       </AnchoredToastProvider>
     </ToastProvider>
   );
+}
+
+function ThemeBootstrap() {
+  useTheme();
+  return null;
 }
 
 function RootRouteErrorView({ error, reset }: ErrorComponentProps) {

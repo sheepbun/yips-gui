@@ -10,6 +10,7 @@ import serverPackageJson from "../apps/server/package.json" with { type: "json" 
 
 import { BRAND_ASSET_PATHS } from "./lib/brand-assets.ts";
 import { resolveCatalogDependencies } from "./lib/resolve-catalog.ts";
+import { resolveYipsVersionMetadata } from "@t3tools/shared/yipsVersion";
 
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
 import * as NodeServices from "@effect/platform-node/NodeServices";
@@ -560,7 +561,13 @@ const buildDesktopArtifact = Effect.fn("buildDesktopArtifact")(function* (
       }),
   });
 
-  const appVersion = options.version ?? serverPackageJson.version;
+  const versionMetadata = resolveYipsVersionMetadata(repoRoot, serverPackageJson.version);
+  if (versionMetadata.source === "fallback-package-version") {
+    yield* Effect.logWarning(
+      "Falling back to package.json version. Add a local t3code checkout next to this repo or set YIPS_T3CODE_REPO_PATH/T3CODE_REPO_PATH. Ref-based fallback is also supported through YIPS_T3CODE_UPSTREAM_REF/T3CODE_UPSTREAM_REF.",
+    );
+  }
+  const appVersion = options.version ?? versionMetadata.buildVersion;
   const commitHash = resolveGitCommitHash(repoRoot);
   const mkdir = options.keepStage ? fs.makeTempDirectory : fs.makeTempDirectoryScoped;
   const stageRoot = yield* mkdir({

@@ -35,6 +35,10 @@
     "./Struct": {
       "types": "./src/Struct.ts",
       "import": "./src/Struct.ts"
+    },
+    "./yipsVersion": {
+      "types": "./src/yipsVersion.ts",
+      "import": "./src/yipsVersion.ts"
     }
   },
   "scripts": {

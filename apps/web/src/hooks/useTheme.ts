@@ -1,31 +1,31 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 
-import type { DesktopTheme } from "@t3tools/contracts";
+import { DEFAULT_SERVER_SETTINGS, type DesktopTheme } from "@t3tools/contracts";
+import type { AppTheme } from "@t3tools/contracts/settings";
+import { useQuery } from "@tanstack/react-query";
+import { serverConfigQueryOptions } from "~/lib/serverReactQuery";
+import { useUpdateSettings } from "./useSettings";
 
-type Theme = DesktopTheme | "black";
-type ThemeSnapshot = {
-  theme: Theme;
-  systemDark: boolean;
-};
+type Theme = AppTheme;
 
 const STORAGE_KEY = "t3code:theme";
 const MEDIA_QUERY = "(prefers-color-scheme: dark)";
 
-let listeners: Array<() => void> = [];
-let lastSnapshot: ThemeSnapshot | null = null;
-let lastDesktopTheme: Theme | null = null;
-function emitChange() {
-  for (const listener of listeners) listener();
-}
+let lastDesktopTheme: DesktopTheme | null = null;
+let hasMigratedLegacyTheme = false;
 
 function getSystemDark(): boolean {
   return window.matchMedia(MEDIA_QUERY).matches;
 }
 
-function getStored(): Theme {
+function getStoredTheme(): Theme {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw === "light" || raw === "dark" || raw === "system" || raw === "black") return raw;
   return "system";
+}
+
+function setStoredTheme(theme: Theme) {
+  localStorage.setItem(STORAGE_KEY, theme);
 }
 
 function applyTheme(theme: Theme, suppressTransitions = false) {
@@ -62,68 +62,64 @@ function syncDesktopTheme(theme: Theme) {
 }
 
 // Apply immediately on module load to prevent flash
-applyTheme(getStored());
+applyTheme(getStoredTheme());
 
-function getSnapshot(): ThemeSnapshot {
-  const theme = getStored();
-  const systemDark = theme === "system" ? getSystemDark() : false;
-
-  if (lastSnapshot && lastSnapshot.theme === theme && lastSnapshot.systemDark === systemDark) {
-    return lastSnapshot;
-  }
-
-  lastSnapshot = { theme, systemDark };
-  return lastSnapshot;
-}
-
-function subscribe(listener: () => void): () => void {
-  listeners.push(listener);
-
-  // Listen for system preference changes
+function subscribeSystemDark(listener: () => void): () => void {
   const mq = window.matchMedia(MEDIA_QUERY);
-  const handleChange = () => {
-    if (getStored() === "system") applyTheme("system", true);
-    emitChange();
-  };
-  mq.addEventListener("change", handleChange);
-
-  // Listen for storage changes from other tabs
-  const handleStorage = (e: StorageEvent) => {
-    if (e.key === STORAGE_KEY) {
-      applyTheme(getStored(), true);
-      emitChange();
-    }
-  };
-  window.addEventListener("storage", handleStorage);
-
+  mq.addEventListener("change", listener);
   return () => {
-    listeners = listeners.filter((l) => l !== listener);
-    mq.removeEventListener("change", handleChange);
-    window.removeEventListener("storage", handleStorage);
+    mq.removeEventListener("change", listener);
   };
 }
 
 export function useTheme() {
-  const snapshot = useSyncExternalStore(subscribe, getSnapshot);
-  const theme = snapshot.theme;
+  const { updateSettings } = useUpdateSettings();
+  const serverConfigQuery = useQuery(serverConfigQueryOptions());
+  const systemDark = useSyncExternalStore(subscribeSystemDark, getSystemDark);
+  const storedTheme = getStoredTheme();
+  const serverTheme = serverConfigQuery.data?.settings.theme;
+  const theme =
+    serverConfigQuery.status === "success" &&
+    serverTheme === DEFAULT_SERVER_SETTINGS.theme &&
+    storedTheme !== DEFAULT_SERVER_SETTINGS.theme &&
+    !hasMigratedLegacyTheme
+      ? storedTheme
+      : (serverTheme ?? storedTheme);
 
   const resolvedTheme: "light" | "dark" =
-    theme === "system"
-      ? snapshot.systemDark
-        ? "dark"
-        : "light"
-      : theme === "black"
-        ? "dark"
-        : theme;
+    theme === "system" ? (systemDark ? "dark" : "light") : theme === "black" ? "dark" : theme;
 
-  const setTheme = useCallback((next: Theme) => {
-    localStorage.setItem(STORAGE_KEY, next);
-    applyTheme(next, true);
-    emitChange();
-  }, []);
+  const setTheme = useCallback(
+    (next: Theme) => {
+      setStoredTheme(next);
+      applyTheme(next, true);
+      updateSettings({ theme: next });
+    },
+    [updateSettings],
+  );
+
+  useEffect(() => {
+    if (
+      hasMigratedLegacyTheme ||
+      serverConfigQuery.status !== "success" ||
+      serverTheme === undefined ||
+      serverTheme !== DEFAULT_SERVER_SETTINGS.theme
+    ) {
+      return;
+    }
+
+    const legacyTheme = getStoredTheme();
+    hasMigratedLegacyTheme = true;
+    if (legacyTheme === DEFAULT_SERVER_SETTINGS.theme) {
+      return;
+    }
+
+    updateSettings({ theme: legacyTheme });
+  }, [serverConfigQuery.status, serverTheme, updateSettings]);
 
   // Keep DOM in sync on mount/change
   useEffect(() => {
+    setStoredTheme(theme);
     applyTheme(theme);
   }, [theme]);
 

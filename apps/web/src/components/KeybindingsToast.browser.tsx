@@ -1,6 +1,7 @@
 import "../index.css";
 
 import {
+  DEFAULT_SERVER_SETTINGS,
   ORCHESTRATION_WS_METHODS,
   type MessageId,
   type OrchestrationReadModel,
@@ -57,6 +58,7 @@ function createBaseServerConfig(): ServerConfig {
     ],
     availableEditors: [],
     settings: {
+      theme: DEFAULT_SERVER_SETTINGS.theme,
       enableAssistantStreaming: false,
       defaultThreadEnvMode: "local" as const,
       textGenerationModelSelection: { provider: "codex" as const, model: "gpt-5.4-mini" },

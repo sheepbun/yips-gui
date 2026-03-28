@@ -1604,7 +1604,7 @@ export default function Sidebar() {
           render={
             <div className="flex min-w-0 flex-1 items-center gap-1 ml-1 cursor-pointer">
               <YipsWordmark />
-              <span className="rounded-full bg-muted/50 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.18em] text-muted-foreground/60">
+              <span className="rounded-full bg-muted/50 px-1.5 py-0.5 text-[8px] font-medium tracking-[0.18em] text-muted-foreground/60">
                 {APP_VERSION_LABEL}
               </span>
             </div>
