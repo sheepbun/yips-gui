@@ -24,7 +24,7 @@ import {
   MAX_CUSTOM_MODEL_LENGTH,
   resolveAppModelSelectionState,
 } from "../modelSelection";
-import { APP_VERSION } from "../branding";
+import { APP_VERSION_LABEL } from "../branding";
 import { Button } from "../components/ui/button";
 import { Collapsible, CollapsibleContent } from "../components/ui/collapsible";
 import { Input } from "../components/ui/input";
@@ -1297,7 +1297,9 @@ function SettingsRouteView() {
                 title="Version"
                 description="Current application version."
                 control={
-                  <code className="text-xs font-medium text-muted-foreground">{APP_VERSION}</code>
+                  <code className="text-xs font-medium text-muted-foreground">
+                    {APP_VERSION_LABEL}
+                  </code>
                 }
               />
             </SettingsSection>
